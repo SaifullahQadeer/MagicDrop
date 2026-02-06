@@ -132,7 +132,7 @@ export const action = async ({ request }) => {
     }
 
     try {
-      // Fetch order from Shopify
+      // Fetch order from Shopify (no customer field — requires read_customers scope)
       const response = await admin.graphql(`
         query($query: String!) {
           orders(first: 1, query: $query) {
@@ -141,10 +141,6 @@ export const action = async ({ request }) => {
                 id
                 name
                 email
-                customer {
-                  firstName
-                  lastName
-                }
                 lineItems(first: 50) {
                   edges {
                     node {
@@ -174,10 +170,10 @@ export const action = async ({ request }) => {
 
       const order = orders[0].node;
       let totalLinks = 0;
+      let generatedLinks = [];
 
       for (const item of order.lineItems.edges) {
         const productId = item.node.product?.id;
-        const variantId = item.node.variant?.id;
         if (!productId) continue;
 
         const productLinks = await db.productFileLink.findMany({
@@ -189,7 +185,7 @@ export const action = async ({ request }) => {
         });
 
         if (productLinks.length > 0) {
-          await generateMagicLinksForOrder({
+          const links = await generateMagicLinksForOrder({
             shop,
             order: {
               id: order.id,
@@ -198,8 +194,9 @@ export const action = async ({ request }) => {
             },
             productLinks,
             customerEmail: order.email,
-            customerName: `${order.customer?.firstName || ""} ${order.customer?.lastName || ""}`.trim(),
+            customerName: "",
           });
+          if (links) generatedLinks.push(...links);
           totalLinks += productLinks.length;
         }
       }
@@ -208,7 +205,13 @@ export const action = async ({ request }) => {
         return json({ error: `No linked digital files found for order ${order.name}. Make sure the products in this order are linked to digital files.` });
       }
 
-      return json({ success: true, message: `Generated ${totalLinks} magic link(s) for ${order.name}! Check Magic Links page and customer email.` });
+      const appUrl = process.env.SHOPIFY_APP_URL || "https://magic-drop.vercel.app";
+      const linkUrls = generatedLinks.map(l => `${appUrl}/download/${l.token}`);
+      return json({
+        success: true,
+        message: `Generated ${totalLinks} magic link(s) for ${order.name} (${order.email})!`,
+        links: linkUrls,
+      });
     } catch (error) {
       return json({ error: `Failed to process order: ${error.message}` });
     }
@@ -300,7 +303,21 @@ export default function SettingsPage() {
         )}
         {actionData?.success && (
           <Layout.Section>
-            <Banner tone="success">{actionData.message}</Banner>
+            <Banner tone="success">
+              <BlockStack gap="200">
+                <Text>{actionData.message}</Text>
+                {actionData.links && actionData.links.length > 0 && (
+                  <BlockStack gap="100">
+                    <Text variant="bodySm" fontWeight="bold">Download Links:</Text>
+                    {actionData.links.map((url, i) => (
+                      <Text key={i} variant="bodySm">
+                        <a href={url} target="_blank" rel="noopener noreferrer">{url}</a>
+                      </Text>
+                    ))}
+                  </BlockStack>
+                )}
+              </BlockStack>
+            </Banner>
           </Layout.Section>
         )}
 
