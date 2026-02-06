@@ -4,7 +4,7 @@
   "private": true,
   "description": "Shopify app for secure digital product delivery via magic links",
   "scripts": {
-    "build": "npx prisma generate && npx remix vite:build",
+    "build": "npx remix vite:build",
     "postinstall": "npx prisma generate",
     "dev": "shopify app dev",
     "config:link": "shopify app config link",
