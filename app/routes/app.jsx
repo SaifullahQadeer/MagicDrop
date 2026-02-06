@@ -3,12 +3,20 @@ import { boundary } from "@shopify/shopify-app-remix/server";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
 import { NavMenu } from "@shopify/app-bridge-react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
-import { authenticate } from "../shopify.server";
+import { authenticate, registerWebhooks } from "../shopify.server";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 export const loader = async ({ request }) => {
-  await authenticate.admin(request);
+  const { session } = await authenticate.admin(request);
+
+  // Register webhooks on each admin load (idempotent)
+  try {
+    await registerWebhooks({ session });
+  } catch (e) {
+    console.log("Webhook registration:", e.message);
+  }
+
   return { apiKey: process.env.SHOPIFY_API_KEY || "" };
 };
 
