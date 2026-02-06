@@ -6,13 +6,12 @@ export const action = async ({ request }) => {
   const { topic, shop, session, admin, payload } =
     await authenticate.webhook(request);
 
-  if (!admin) {
-    throw new Response();
-  }
+  console.log(`[Webhook] Received topic=${topic} shop=${shop}`);
 
   switch (topic) {
     case "ORDERS_CREATE":
-      await handleOrderCreate(shop, payload, admin);
+      console.log(`[Webhook] Processing order: ${payload?.name || payload?.id}`);
+      await handleOrderCreate(shop, payload);
       break;
     case "APP_UNINSTALLED":
       if (session) {
@@ -31,9 +30,13 @@ export const action = async ({ request }) => {
   return new Response();
 };
 
-async function handleOrderCreate(shop, payload, admin) {
+async function handleOrderCreate(shop, payload) {
   const order = payload;
   const lineItems = order.line_items || [];
+
+  console.log(`[Webhook] Order ${order.name || order.id}: ${lineItems.length} line items, email: ${order.email}`);
+
+  let totalLinks = 0;
 
   for (const item of lineItems) {
     const productId = `gid://shopify/Product/${item.product_id}`;
@@ -46,10 +49,11 @@ async function handleOrderCreate(shop, payload, admin) {
       where: {
         shop,
         shopifyProductId: productId,
-        ...(variantId ? { shopifyVariantId: variantId } : {}),
       },
       include: { file: true },
     });
+
+    console.log(`[Webhook] Product ${productId}: found ${productLinks.length} file links`);
 
     if (productLinks.length > 0) {
       await generateMagicLinksForOrder({
@@ -59,6 +63,9 @@ async function handleOrderCreate(shop, payload, admin) {
         customerEmail: order.email,
         customerName: `${order.customer?.first_name || ""} ${order.customer?.last_name || ""}`.trim(),
       });
+      totalLinks += productLinks.length;
     }
   }
+
+  console.log(`[Webhook] Order ${order.name || order.id}: generated ${totalLinks} magic link(s)`);
 }

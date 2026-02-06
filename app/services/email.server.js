@@ -34,7 +34,7 @@ export async function sendMagicLinkEmail({
     settings?.emailBody ||
     "Thank you for your purchase! Click the links below to download your files.";
   const brandColor = settings?.brandColor || "#5C6AC4";
-  const appUrl = process.env.APP_URL || "https://your-app-url.com";
+  const appUrl = process.env.SHOPIFY_APP_URL || process.env.APP_URL || "https://magic-drop.vercel.app";
 
   const fileRows = magicLinks
     .map(
