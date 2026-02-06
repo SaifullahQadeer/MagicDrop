@@ -42,10 +42,11 @@ export async function uploadFileToS3(shop, fileName, fileBuffer, mimeType) {
 /**
  * Generate a time-limited presigned URL for downloading a file from S3.
  */
-export async function getPresignedDownloadUrl(s3Key, s3Bucket, expiresIn = 300) {
+export async function getPresignedDownloadUrl(s3Key, s3Bucket, expiresIn = 300, fileName) {
   const command = new GetObjectCommand({
     Bucket: s3Bucket || BUCKET,
     Key: s3Key,
+    ...(fileName ? { ResponseContentDisposition: `attachment; filename="${fileName}"` } : { ResponseContentDisposition: "attachment" }),
   });
 
   return getSignedUrl(s3Client, command, { expiresIn });

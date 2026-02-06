@@ -37,11 +37,12 @@ export const action = async ({ request, params }) => {
   const userAgent = request.headers.get("user-agent");
   await recordDownload(magicLink.id, ip, userAgent);
 
-  // Generate presigned S3 URL and redirect to it
+  // Generate presigned S3 URL with forced download and redirect to it
   const downloadUrl = await getPresignedDownloadUrl(
     magicLink.file.s3Key,
     magicLink.file.s3Bucket,
-    300 // 5 minutes
+    300, // 5 minutes
+    magicLink.file.originalName
   );
 
   return redirect(downloadUrl);
