@@ -4,6 +4,7 @@ import {
   useLoaderData,
   useNavigation,
   useSubmit,
+  useNavigate,
 } from "@remix-run/react";
 import {
   Page,
@@ -102,6 +103,7 @@ export default function FilesPage() {
   const actionData = useActionData();
   const navigation = useNavigation();
   const submit = useSubmit();
+  const navigate = useNavigate();
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [deleteFileId, setDeleteFileId] = useState(null);
@@ -179,7 +181,7 @@ export default function FilesPage() {
       </IndexTable.Cell>
       <IndexTable.Cell>
         <InlineStack gap="200">
-          <Button url={`/app/files/${file.id}`} size="slim">
+          <Button onClick={() => navigate(`/app/files/${file.id}`)} size="slim">
             Manage
           </Button>
           <Button
