@@ -1,0 +1,9 @@
+node_modules/
+build/
+.cache/
+.env
+*.sqlite
+*.sqlite-journal
+prisma/migrations/*/migration_lock.toml
+dist/
+.DS_Store
