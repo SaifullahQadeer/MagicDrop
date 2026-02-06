@@ -1,6 +1,6 @@
 name = "MagicDrop"
 client_id = "SHOPIFY_API_KEY_PLACEHOLDER"
-application_url = "https://your-app-url.com"
+application_url = "https://your-app.vercel.app"
 embedded = true
 
 [access_scopes]
@@ -8,18 +8,22 @@ scopes = "read_products,read_orders,write_orders"
 
 [auth]
 redirect_urls = [
-  "https://your-app-url.com/auth/callback",
-  "https://your-app-url.com/auth/shopify/callback",
-  "https://your-app-url.com/api/auth/callback"
+  "https://your-app.vercel.app/auth/callback",
+  "https://your-app.vercel.app/auth/shopify/callback",
+  "https://your-app.vercel.app/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-04"
 
+  [[webhooks.subscriptions]]
+  topics = ["orders/create"]
+  uri = "/webhooks"
+
   [webhooks.privacy_compliance]
-  customer_deletion_url = "https://your-app-url.com/api/webhooks/privacy/customer-deletion"
-  customer_data_request_url = "https://your-app-url.com/api/webhooks/privacy/customer-data-request"
-  shop_deletion_url = "https://your-app-url.com/api/webhooks/privacy/shop-deletion"
+  customer_deletion_url = "https://your-app.vercel.app/webhooks"
+  customer_data_request_url = "https://your-app.vercel.app/webhooks"
+  shop_deletion_url = "https://your-app.vercel.app/webhooks"
 
 [pos]
 embedded = false

@@ -4,7 +4,8 @@
   "private": true,
   "description": "Shopify app for secure digital product delivery via magic links",
   "scripts": {
-    "build": "remix vite:build",
+    "build": "prisma generate && remix vite:build",
+    "postinstall": "prisma generate",
     "dev": "shopify app dev",
     "config:link": "shopify app config link",
     "generate": "shopify app generate",
@@ -29,6 +30,7 @@
     "@remix-run/node": "^2.7.1",
     "@remix-run/react": "^2.7.1",
     "@remix-run/serve": "^2.7.1",
+    "@vercel/remix": "^2.7.1",
     "@shopify/app-bridge-react": "^4.1.2",
     "@shopify/polaris": "^12.27.0",
     "@shopify/shopify-app-remix": "^3.0.0",

@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // Shopify session storage (required by shopify-app-remix)
@@ -24,78 +25,90 @@ model Session {
   locale        String?
   collaborator  Boolean?  @default(false)
   emailVerified Boolean?  @default(false)
+
+  @@index([shop])
 }
 
 // Merchant settings per shop
 model ShopSettings {
-  id                String   @id @default(uuid())
-  shop              String   @unique
-  defaultExpiryHours Int    @default(72)
-  defaultMaxDownloads Int   @default(3)
-  emailSubject      String  @default("Your download is ready!")
-  emailBody         String  @default("Thank you for your purchase! Click the link below to download your files.")
-  brandColor        String  @default("#5C6AC4")
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                  String   @id @default(uuid())
+  shop                String   @unique
+  defaultExpiryHours  Int      @default(72)
+  defaultMaxDownloads Int      @default(3)
+  emailSubject        String   @default("Your download is ready!")
+  emailBody           String   @default("Thank you for your purchase! Click the link below to download your files.")
+  brandColor          String   @default("#5C6AC4")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
 
 // Digital files uploaded by merchants
 model DigitalFile {
-  id            String      @id @default(uuid())
-  shop          String
-  fileName      String
-  originalName  String
-  fileSize      Int
-  mimeType      String
-  s3Key         String
-  s3Bucket      String
-  productLinks  ProductFileLink[]
-  magicLinks    MagicLink[]
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id           String            @id @default(uuid())
+  shop         String
+  fileName     String
+  originalName String
+  fileSize     Int
+  mimeType     String
+  s3Key        String
+  s3Bucket     String
+  productLinks ProductFileLink[]
+  magicLinks   MagicLink[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([shop])
 }
 
 // Links between digital files and Shopify products/variants
 model ProductFileLink {
-  id            String      @id @default(uuid())
-  shop          String
-  shopifyProductId   String
-  shopifyVariantId   String?
-  productTitle       String
-  variantTitle       String?
-  fileId             String
-  file               DigitalFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
-  createdAt          DateTime    @default(now())
+  id               String      @id @default(uuid())
+  shop             String
+  shopifyProductId String
+  shopifyVariantId String?
+  productTitle     String
+  variantTitle     String?
+  fileId           String
+  file             DigitalFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  createdAt        DateTime    @default(now())
 
   @@unique([shopifyProductId, shopifyVariantId, fileId])
+  @@index([shop])
+  @@index([shopifyProductId])
 }
 
 // Magic links sent to customers
 model MagicLink {
-  id              String     @id @default(uuid())
-  shop            String
-  token           String     @unique
-  fileId          String
-  file            DigitalFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
-  orderId         String
-  orderName       String?
-  customerEmail   String
-  customerName    String?
-  maxDownloads    Int        @default(3)
-  downloadCount   Int        @default(0)
-  expiresAt       DateTime
-  revokedAt       DateTime?
-  downloads       Download[]
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
+  id            String      @id @default(uuid())
+  shop          String
+  token         String      @unique
+  fileId        String
+  file          DigitalFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  orderId       String
+  orderName     String?
+  customerEmail String
+  customerName  String?
+  maxDownloads  Int         @default(3)
+  downloadCount Int         @default(0)
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  downloads     Download[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([shop])
+  @@index([customerEmail])
+  @@index([orderId])
 }
 
 // Download activity log
 model Download {
-  id            String    @id @default(uuid())
-  magicLinkId   String
-  magicLink     MagicLink @relation(fields: [magicLinkId], references: [id], onDelete: Cascade)
-  ipAddress     String?
-  userAgent     String?
-  downloadedAt  DateTime  @default(now())
+  id           String    @id @default(uuid())
+  magicLinkId  String
+  magicLink    MagicLink @relation(fields: [magicLinkId], references: [id], onDelete: Cascade)
+  ipAddress    String?
+  userAgent    String?
+  downloadedAt DateTime  @default(now())
+
+  @@index([magicLinkId])
 }
